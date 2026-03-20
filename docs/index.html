@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SongSnap-KR — 실시간 노래 인식기</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .bg-gradient {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(120,50,255,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(255,50,120,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(50,120,255,0.1) 0%, transparent 50%);
+    z-index: 0;
+  }
+  .hero {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 60px 20px 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(120,50,255,0.2);
+    border: 1px solid rgba(120,50,255,0.4);
+    border-radius: 20px;
+    padding: 5px 16px;
+    font-size: 0.78rem;
+    color: #a78bfa;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: #a78bfa; }
+  .hero p {
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    color: #888;
+    max-width: 560px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+  .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: 12px;
+    font-size: 0.95rem; font-weight: 600;
+    text-decoration: none; transition: all 0.25s ease;
+    cursor: pointer; border: none;
+  }
+  .btn-primary { background: linear-gradient(135deg, #7832ff, #ff3278); color: #fff; }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-secondary { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #ccc; }
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+  .demo-notice {
+    position: relative; z-index: 1;
+    text-align: center; padding: 12px 20px;
+    background: rgba(245,158,11,0.08);
+    border-bottom: 1px solid rgba(245,158,11,0.15);
+    font-size: 0.82rem; color: #f59e0b;
+  }
+  .demo-notice span { opacity: 0.7; }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 600px; margin: 0 auto; padding: 40px 20px;
+  }
+  header { text-align: center; margin-bottom: 40px; }
+  header h2 { font-size: 1.4rem; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
+  .status {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 12px;
+    padding: 6px 16px; background: rgba(255,255,255,0.06);
+    border-radius: 20px; font-size: 0.85rem; color: #aaa;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .now-playing {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px; padding: 32px; text-align: center;
+    margin-bottom: 32px; backdrop-filter: blur(20px); transition: all 0.6s ease;
+  }
+  .now-playing.has-song { border-color: rgba(120,50,255,0.3); background: rgba(120,50,255,0.08); }
+  .now-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-bottom: 20px; }
+  .cover-art {
+    width: 160px; height: 160px; border-radius: 16px; margin: 0 auto 24px;
+    background: rgba(255,255,255,0.05); overflow: hidden; display: none;
+    box-shadow: 0 8px 32px rgba(120,50,255,0.3);
+  }
+  .cover-art img { width: 100%; height: 100%; object-fit: cover; }
+  .cover-art.visible { display: block; }
+  .song-title { font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 4px; line-height: 1.3; }
+  .song-title-ko { font-size: 1rem; color: #9b7aff; margin-bottom: 8px; font-weight: 500; }
+  .song-artist { font-size: 1.1rem; color: #aaa; }
+  .song-artist-ko { font-size: 0.9rem; color: #888; margin-top: 2px; }
+
+  .eq-bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 20px; margin-bottom: 16px; }
+  .eq-bar { width: 4px; background: linear-gradient(to top, #7832ff, #ff3278); border-radius: 2px; animation: eq 0.8s ease-in-out infinite alternate; }
+  .eq-bar:nth-child(1){height:8px;animation-delay:0s}
+  .eq-bar:nth-child(2){height:16px;animation-delay:.2s}
+  .eq-bar:nth-child(3){height:10px;animation-delay:.4s}
+  .eq-bar:nth-child(4){height:18px;animation-delay:.1s}
+  .eq-bar:nth-child(5){height:6px;animation-delay:.3s}
+  @keyframes eq { 0%{transform:scaleY(.3)} 100%{transform:scaleY(1)} }
+
+  .history-section h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 16px; padding-left: 4px; }
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    display: flex; align-items: center; gap: 16px; padding: 14px 18px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 14px; transition: all 0.3s ease; animation: slideIn 0.5s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+  .history-item:hover { background: rgba(255,255,255,0.06); }
+  .history-cover { width:44px; height:44px; border-radius:8px; background:rgba(255,255,255,0.08); flex-shrink:0; overflow:hidden; }
+  .history-cover img { width:100%; height:100%; object-fit:cover; }
+  .history-info { flex:1; min-width:0; }
+  .history-title { font-size:0.95rem; font-weight:600; color:#ddd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .history-artist { font-size:0.8rem; color:#777; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .history-time { font-size:0.75rem; color:#555; flex-shrink:0; font-variant-numeric:tabular-nums; }
+
+  .how-it-works {
+    position: relative; z-index: 1;
+    max-width: 800px; margin: 0 auto; padding: 60px 20px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .how-it-works h2 { font-size: 1.6rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 40px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; }
+  .step { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px 20px; text-align: center; }
+  .step-icon { font-size: 2rem; margin-bottom: 12px; }
+  .step-title { font-size: 0.9rem; font-weight: 600; color: #ddd; margin-bottom: 8px; }
+  .step-desc { font-size: 0.8rem; color: #666; line-height: 1.6; }
+
+  .footer { position: relative; z-index: 1; text-align: center; padding: 30px 20px 50px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.8rem; color: #444; }
+  .footer a { color: #666; text-decoration: none; }
+  .footer a:hover { color: #999; }
+</style>
+</head>
+<body>
+<div class="bg-gradient"></div>
+
+<section class="hero">
+  <div class="hero-badge">오픈소스 · Windows · Python</div>
+  <h1>PC에서 <span>실시간으로</span><br>노래를 인식합니다</h1>
+  <p>SongSnap-KR은 컴퓨터에서 재생 중인 음악을 자동으로 인식하고, 제목을 한국어로 번역해 보여줍니다. 마이크 없이, 더블클릭 한 번으로.</p>
+  <div class="hero-buttons">
+    <a href="https://github.com/wjddusrb03/SongSnap-KR" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub에서 보기
+    </a>
+    <a href="#demo" class="btn btn-secondary">라이브 미리보기 ↓</a>
+  </div>
+</section>
+
+<div class="demo-notice">
+  이것은 시뮬레이션 데이터를 사용한 인터랙티브 미리보기입니다.
+  <span>실제 노래 인식은 앱을 로컬에서 실행하세요.</span>
+</div>
+
+<div id="demo" class="container">
+  <header>
+    <h2>SongSnap-KR</h2>
+    <div class="status">
+      <div class="status-dot"></div>
+      <span id="statusText">듣는 중...</span>
+    </div>
+  </header>
+
+  <div class="now-playing has-song" id="nowPlaying">
+    <div class="now-label">NOW PLAYING</div>
+    <div class="eq-bars" id="eqBars">
+      <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+      <div class="eq-bar"></div><div class="eq-bar"></div>
+    </div>
+    <div class="cover-art visible" id="coverArt"><img id="coverImg" src="" alt=""></div>
+    <div class="song-title" id="songTitle">연결 중...</div>
+    <div class="song-title-ko" id="songTitleKo"></div>
+    <div class="song-artist" id="songArtist"></div>
+    <div class="song-artist-ko" id="songArtistKo"></div>
+  </div>
+
+  <div class="history-section">
+    <h3>인식 기록</h3>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<section class="how-it-works">
+  <h2>어떻게 작동하나요?</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">🔊</div>
+      <div class="step-title">루프백 캡처</div>
+      <div class="step-desc">Windows WASAPI를 통해 PC 시스템 오디오를 직접 캡처 — 마이크 불필요</div>
+    </div>
+    <div class="step">
+      <div class="step-icon">📊</div>
+      <div class="step-title">핑거프린팅</div>
+      <div class="step-desc">오디오를 주파수 스펙트로그램으로 변환하고 피크 포인트를 고유 지문으로 추출</div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🎯</div>
+      <div class="step-title">곡 매칭</div>
+      <div class="step-desc">7천만 곡 이상의 DB와 대조하여 1초 이내에 결과 반환</div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🇰🇷</div>
+      <div class="step-title">한국어 번역</div>
+      <div class="step-desc">원제목 옆에 Google 번역으로 한국어 제목을 함께 표시</div>
+    </div>
+    <div class="step">
+      <div class="step-icon">🌐</div>
+      <div class="step-title">실시간 웹 UI</div>
+      <div class="step-desc">WebSocket으로 앨범 아트와 메타데이터를 브라우저에 즉시 전송</div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>
+    <a href="https://github.com/wjddusrb03/SongSnap-KR">GitHub</a> ·
+    MIT License ·
+    <a href="https://github.com/dotX12/ShazamAPI">ShazamAPI</a> 사용 (비공식 서드파티) ·
+    Shazam Entertainment Ltd. 또는 Apple Inc.와 무관한 독립 프로젝트
+  </p>
+</footer>
+
+<script>
+  const DEMO_SONGS = [
+    { title: "Shikigami", artist: "Aimer", title_ko: "식신", artist_ko: "에이머", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/1e/23/49/1e2349f2-99b7-a9d1-2b6e-c2a06b3ed8c7/196871419451.jpg/400x400bb.jpg", time: formatTime(new Date(Date.now()-180000)) },
+    { title: "Idol", artist: "YOASOBI", title_ko: "아이돌", artist_ko: "요아소비", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/64/f2/88/64f28812-8a71-caa5-5a02-e7fdfe09c3c3/196922833441.jpg/400x400bb.jpg", time: formatTime(new Date(Date.now()-360000)) },
+    { title: "Zenzenzense", artist: "RADWIMPS", title_ko: "전전전세", artist_ko: "래드윔프스", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c5/f6/dc/c5f6dcc5-ed9e-1a9d-9e4e-30dfbf40e53a/4547557050652.jpg/400x400bb.jpg", time: formatTime(new Date(Date.now()-540000)) },
+  ];
+
+  const NOW_PLAYING = [
+    { title: "Yoru ni Kakeru", artist: "YOASOBI", title_ko: "밤을 달리다", artist_ko: "요아소비", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/6e/52/87/6e5287b7-9c42-2f59-43b1-f64e32edaf4b/196871282989.jpg/400x400bb.jpg" },
+    { title: "Gurenge", artist: "LiSA", title_ko: "홍련화", artist_ko: "리사", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/a8/15/1a/a8151ad5-3b18-7e5e-e3b2-b471dd14e8ad/20UMGIM18827.rgb.jpg/400x400bb.jpg" },
+    { title: "Unravel", artist: "TK from Ling tosite sigure", title_ko: "언레이블", artist_ko: "TK", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/dd/c5/cf/ddc5cf06-82d7-cbdd-0117-fbfeda48ef9e/mzm.jnqkwkxw.jpg/400x400bb.jpg" },
+    { title: "Silhouette", artist: "KANA-BOON", title_ko: "실루엣", artist_ko: "카나분", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music6/v4/b5/c5/1e/b5c51e66-9aaf-0dce-26fb-d8bbcef6cbe4/mzm.mmhxzoxo.jpg/400x400bb.jpg" },
+  ];
+
+  function formatTime(d) { return d.toTimeString().slice(0, 8); }
+  function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+  let history = [...DEMO_SONGS];
+  let nowIdx = 0;
+
+  function renderHistory() {
+    document.getElementById('historyList').innerHTML = history.map(s => `
+      <div class="history-item">
+        <div class="history-cover">${s.cover ? `<img src="${esc(s.cover)}" alt="" onerror="this.style.display='none'">` : ''}</div>
+        <div class="history-info">
+          <div class="history-title">${esc(s.title)}${s.title_ko ? ` <span style="color:#9b7aff;font-weight:400;font-size:0.85rem">(${esc(s.title_ko)})</span>` : ''}</div>
+          <div class="history-artist">${esc(s.artist)}${s.artist_ko ? ` (${esc(s.artist_ko)})` : ''}</div>
+        </div>
+        <div class="history-time">${s.time}</div>
+      </div>`).join('');
+  }
+
+  function showSong(song) {
+    document.getElementById('nowPlaying').classList.add('has-song');
+    document.getElementById('songTitle').textContent = song.title;
+    document.getElementById('songTitleKo').textContent = song.title_ko || '';
+    document.getElementById('songArtist').textContent = song.artist;
+    document.getElementById('songArtistKo').textContent = song.artist_ko || '';
+    if (song.cover) {
+      document.getElementById('coverImg').src = song.cover;
+      document.getElementById('coverArt').classList.add('visible');
+    }
+    history.unshift({ ...song, time: formatTime(new Date()) });
+    history = history.slice(0, 20);
+    renderHistory();
+  }
+
+  renderHistory();
+  setTimeout(() => {
+    showSong(NOW_PLAYING[nowIdx++ % NOW_PLAYING.length]);
+    setInterval(() => showSong(NOW_PLAYING[nowIdx++ % NOW_PLAYING.length]), 8000);
+  }, 2000);
+</script>
+</body>
+</html>

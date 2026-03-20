@@ -1,0 +1,6 @@
+fastapi==0.115.12
+uvicorn==0.34.0
+pyaudiowpatch==0.2.12.6
+numpy==2.2.4
+ShazamAPI==0.6.1
+deep-translator==1.11.4
